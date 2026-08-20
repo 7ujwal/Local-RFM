@@ -1,0 +1,92 @@
+{
+  "project": "Roaming From Rohru",
+  "context": "Hybrid fullstack promotional travel and events website with owner CMS",
+  "phase_1_discovery": {
+    "audience": "City-dwelling Indian adventure seekers, offbeat travellers, 4x4 communities, and culture-curious weekend explorers.",
+    "primary_tasks": ["Feel the place immediately", "Explore places, food, and culture", "Compare and book events", "Send an enquiry", "Follow Instagram"],
+    "success_actions": ["Book Now", "Explore Rohru", "Send enquiry", "Follow @RoamingFromRohru"],
+    "emotional_tone": "raw, cinematic, intimate, rebellious, mountain-wild",
+    "theme": "dark-first; deep black structural surfaces with orange action cues and restrained gold wayfinding",
+    "chosen_archetype": "Luxury with Swiss high-contrast discipline, transformed by Himalayan field-journal texture"
+  },
+  "design_concepts": [
+    {"name": "The Trail Ledger", "probability": 0.34, "direction": "Cinematic expedition journal fused with Swiss wayfinding and distressed screenprint. Strongest option for the requested brand."},
+    {"name": "Pabbar After Dark", "probability": 0.22, "direction": "Nocturnal river-camp mood fused with film credits and topographic contour lines; intimate and premium."},
+    {"name": "Pass / Signal", "probability": 0.18, "direction": "Off-road rally timing boards fused with Himalayan poster art and documentary photography; energetic booking focus."},
+    {"name": "The Village Almanac", "probability": 0.15, "direction": "Handmade food/culture field notes fused with archival map marginalia and editorial travel publishing."},
+    {"name": "Altitude Radio", "probability": 0.11, "direction": "Mountain broadcast identity fused with utility labels, cassette-era typography, and restrained motion."}
+  ],
+  "research_references": [
+    {"source": "Godly / Summit immersive mountain templates", "descriptors": ["full-viewport cinematic hero", "parallax depth", "delayed headline reveal", "conversion after emotional immersion"]},
+    {"source": "Land-book / editorial destination patterns", "descriptors": ["single-column storybook flow", "masonry photo essays", "hand-illustrated interactive maps", "staged non-aggressive conversion"]},
+    {"source": "SaaSFrame / admin CMS patterns", "descriptors": ["collapsible sidebar", "resource-based CRUD", "status badges", "server-side pagination", "responsive sheet navigation"]}
+  ],
+  "typography": {
+    "heading": "Bebas Neue, fallback Impact, sans-serif; uppercase, tracking-tight, font-black for poster impact",
+    "body": "IBM Plex Sans, fallback Arial, sans-serif; readable, slightly tracked utility copy",
+    "metadata": "Roboto Mono, fallback monospace; uppercase labels with tracking-[0.2em]",
+    "rules": ["H1 max text-6xl", "H2 max text-4xl", "Use leading-none on display type", "Never use Inter for headings", "Do not center-align the app container"]
+  },
+  "colors": {
+    "ink": "#0D0E0C",
+    "inkRaised": "#171714",
+    "paper": "#F1E9D8",
+    "smoke": "#B5AA99",
+    "orange": "#F05A28",
+    "orangeHover": "#FF7843",
+    "gold": "#D6A84F",
+    "line": "#3A332B",
+    "danger": "#D94B3D",
+    "contrast": "Use paper on ink and ink on paper; orange only for CTAs and active states; gold for non-critical highlights. Avoid pure black and gray."
+  },
+  "visual_enhancers": {
+    "texture": "CSS grain/noise overlay using a tiny repeating radial pattern at low opacity; never obscure content",
+    "map": "Topographic contour SVG or CSS contour pattern with animated gold/orange location pin; no generic Google-map styling in the hero",
+    "surfaces": "Mostly cardless flat surfaces, 1px warm borders, occasional solid raised panels; no full-screen gradients",
+    "hero": "Full-screen video with bg-black/35 to bg-black/50 directional scrim so mountain detail remains visible; logo and copy offset left on desktop",
+    "image_treatment": "Warm monochrome or high-contrast crop, captioned like a field note"
+  },
+  "component_name": {
+    "public": ["RohruNav", "HeroVideo", "TopographicMap", "StoryIntro", "ExploreGrid", "ExploreCard", "EventsList", "EventCard", "BookingDialog", "ContactSection", "InstagramStrip", "SiteFooter"],
+    "admin": ["AdminShell", "AdminSidebar", "MetricStrip", "ContentResourceTable", "ResourceEditor", "EventEditor", "BookingsTable", "MessagesTable", "ContactSettings"]
+  },
+  "component_path": "Use .js/.jsx files under /app/frontend/src; use existing Shadcn primitives under /app/frontend/src/components/ui for Dialog, Input, Textarea, Select, Sheet, Table, Tabs, and Sonner.",
+  "grids": {
+    "marketing": "Tetris grid: grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-8 lg:gap-12; hero col-span-full md:col-span-8 row-span-2; supporting square col-span-4; tall story col-span-4 row-span-2; leave intentional empty cells.",
+    "explore": "grid-cols-1 md:grid-cols-8 lg:grid-cols-12 with varied col spans; never make equal square cards.",
+    "admin": "High-density grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4; primary booking/content table spans 2-3 columns; use h-full and direct grid children."
+  },
+  "layouts": {
+    "navigation": "Visible desktop nav with supplied primary logo, Explore, Events, Journal/Instagram, Contact, and orange Plan a Trip CTA. Solid or glass background, z-50, mobile Sheet menu only below desktop.",
+    "home": "Hero video -> contour-map chapter -> editorial introduction -> Explore three-lane grid -> event conversion strip -> Instagram -> contrast-shift footer.",
+    "events": "Left editorial intro and right event rail on desktop; event cards expose date, location, capacity, price and Book Now above fold.",
+    "booking": "Shadcn Dialog with name, phone, people count and event summary; Razorpay checkout triggered after validation.",
+    "admin": "Protected owner shell with compact sidebar, resource tabs, CRUD tables, upload affordance, bookings and messages."
+  },
+  "motion": {
+    "entrance": "Staggered reveal for cards and labels; 500-700ms opacity/transform only",
+    "hero": "Slow video scale/parallax and logo fade; respect prefers-reduced-motion",
+    "hover": "Buttons translate-y-0.5 with explicit hover text color; cards lift -translate-y-1 and border warms",
+    "map": "Subtle contour drift and pulsing marker, aria-hidden for decoration",
+    "scroll": "Use Lenis if dependency is available; otherwise native smooth scrolling. Never use transition: all."
+  },
+  "accessibility": {
+    "requirements": ["All interactive and key informational elements include data-testid in kebab-case", "Keyboard-visible focus rings with high contrast", "Video has poster/fallback and aria-hidden when decorative", "Provide text alternatives for map and images", "Razorpay failure and success states are announced", "Respect prefers-reduced-motion", "Normal text minimum 4.5:1 contrast and large text minimum 3:1"],
+    "testids": ["primary-nav-link", "hero-explore-button", "event-book-button", "booking-name-input", "booking-phone-input", "booking-submit-button", "contact-submit-button", "admin-login-button", "admin-resource-save-button"]
+  },
+  "media": {
+    "video": "Use a scenic mountain placeholder video from a stable public source or local public asset; include poster and muted autoplay loop playsInline. Do not use placeholder image URLs.",
+    "image_behavior": "Use object-cover, max-h-[80vh] on mobile, lazy-load below-fold images, caption every editorial image.",
+    "map_embed": "Google Maps Rohru town embed belongs in Contact with a visible fallback link and accessible title."
+  },
+  "3d_libraries": {"decision": "2D clarity plus cinematic motion is sufficient; no 3D dependency required.", "optional": "Use lightweight SVG contour animation; do not add R3F unless a real terrain asset becomes available."},
+  "image_urls": {
+    "brand_primary_logo": {"url": "https://customer-assets-4nw71qhi.emergentagent.net/wingman/e7672571-b80f-42cc-8891-a0a14036e307/attachments/c953f13eb1984f489e82f2015110e910_703F60F8-2A85-4C93-AE36-0744C79D9970.jpeg", "category": "navbar, hero, footer", "description": "Supplied Roaming From Rohru primary logo"},
+    "brand_round_badge": {"url": "https://customer-assets-4nw71qhi.emergentagent.net/wingman/e7672571-b80f-42cc-8891-a0a14036e307/attachments/6953fd4e04774207a650705a94d532e6_B0D92085-E31D-49F6-99D3-8468196F995B.png", "category": "map marker, mobile nav, social strip", "description": "Supplied round badge logo"},
+    "brand_banner": {"url": "https://customer-assets-4nw71qhi.emergentagent.net/wingman/e7672571-b80f-42cc-8891-a0a14036e307/attachments/0c8932fab4bc4605b13dc6cda24c8289_ChatGPT Image Jul 5%2C 2026%2C 11_38_51 PM.png", "category": "hero fallback, section banner", "description": "Supplied banner graphic"},
+    "explore_placeholder_1": {"url": "https://images.pexels.com/photos/32225789/pexels-photo-32225789.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", "category": "places card / mountain village", "description": "Himalayan village against mountain terrain"},
+    "explore_placeholder_2": {"url": "https://images.pexels.com/photos/37839627/pexels-photo-37839627.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940", "category": "places card / high-altitude landscape", "description": "Himalayan mountain basin and settlement"}
+  },
+  "integrations": {"payments": "Razorpay is explicitly selected; implement server-created orders, signature verification, failure handling, and never trust client price.", "admin_auth": "Emergent-managed Google social login; allow only roamingfromrohru@gmail.com and enforce backend authorization on every admin endpoint.", "backend": "FastAPI endpoints for CRUD, uploads, bookings, messages and contact settings; validate ownership and paginate tables."},
+  "instructions_to_main_agent": ["Build the public experience first, then authenticated CMS.", "Use supplied assets everywhere the brand appears; never substitute text logo or placeholder logo.", "Use Shadcn only for advanced interactions; use raw HTML/Tailwind for marketing composition.", "Keep copy concise and field-journal-like; placeholder content must be clearly replaceable by admin.", "Add data-testid to every button, link, form control, event price/capacity, error and confirmation.", "Create robust loading, empty, error, payment success and payment failure states.", "Do not use complete transparent surfaces under content; do not use forbidden purple or generic gradients."]
+}
