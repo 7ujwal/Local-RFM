@@ -60,6 +60,7 @@ UPLOAD_DIR = ROOT_DIR / 'uploads'
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 app = FastAPI()
+app.mongodb_client = client
 api_router = APIRouter(prefix="/api")
 
 
@@ -224,7 +225,22 @@ async def send_booking_alert(booking: dict, subject_prefix: str):
 
 @api_router.get("/")
 async def root():
-    return {"message": "Roaming From Rohru API"}
+    return {"message": "Roaming From Rohru API. Try GET /api/ping-db"}
+
+
+@api_router.get("/ping-db")
+async def ping_db():
+    try:
+        await app.mongodb_client.admin.command("ping")
+        return {"ok": True, "message": "MongoDB is reachable"}
+    except Exception as e:
+        logger.exception("MongoDB ping failed")
+        return JSONResponse(status_code=500, content={"ok": False, "error": str(e)})
+
+
+@app.get("/ping-db")
+async def ping_db_root():
+    return await ping_db()
 
 
 @api_router.get("/explore")
