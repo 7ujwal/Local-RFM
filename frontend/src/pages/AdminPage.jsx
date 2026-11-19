@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { LogOut, Mountain, CalendarDays, NotebookText, MessageSquare, Settings, Type } from "lucide-react";
+import { LogOut, Mountain, CalendarDays, NotebookText, MessageSquare, Settings, Type, Video } from "lucide-react";
 import { api, BRAND } from "@/lib/api";
 import { ExploreManager } from "@/components/admin/ExploreManager";
 import { EventsManager } from "@/components/admin/EventsManager";
@@ -20,11 +20,29 @@ const TABS = [
 ];
 
 const AdminLogin = () => {
+  const [videoUrl, setVideoUrl] = useState("");
+  const [saving, setSaving] = useState(false);
+
   const login = () => {
     // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
     const redirectUrl = window.location.origin + "/admin";
     window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
+
+  const saveVideo = async (e) => {
+    e.preventDefault();
+    if (!videoUrl.trim()) return;
+    setSaving(true);
+    try {
+      await api.put("/admin/settings/site", { hero_video: videoUrl.trim(), season: "summer" });
+      toast.success("Background video updated — refresh the homepage to see changes");
+    } catch {
+      toast.error("Failed to update video");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-5" data-testid="admin-login-screen">
       <img src={BRAND.badge} alt="Roaming From Rohru badge" className="h-24 w-24 mb-8 rounded-full overflow-hidden" />
@@ -36,6 +54,27 @@ const AdminLogin = () => {
         This dashboard is for the site owner only. Sign in with the registered Google account, then clear the
         passkey and one-time code checks.
       </p>
+
+      <div className="w-full max-w-sm mt-6">
+        <label className="meta text-smoke block mb-2">Homepage Background Video URL</label>
+        <input
+          type="text"
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+          placeholder="https://...mp4 or .webm"
+          className="field"
+          data-testid="admin-login-video-input"
+        />
+        <button
+          onClick={saveVideo}
+          disabled={saving || !videoUrl.trim()}
+          className="btn-orange w-full mt-2"
+          data-testid="admin-login-video-save-button"
+        >
+          {saving ? "Saving…" : "Update Background Video"}
+        </button>
+      </div>
+
       <button onClick={login} data-testid="admin-login-button" className="btn-orange mt-8">
         Sign in with Google
       </button>

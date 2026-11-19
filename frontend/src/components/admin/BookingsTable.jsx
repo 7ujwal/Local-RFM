@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Download } from "lucide-react";
+import { Download, Trash2, CheckSquare, Square } from "lucide-react";
 import { api, INR } from "@/lib/api";
 
 const STATUS_STYLE = {
@@ -15,6 +15,32 @@ export const BookingsTable = () => {
   const [waitlist, setWaitlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [selected, setSelected] = useState([]);
+
+  const toggleSelect = (id) => {
+    setSelected(prev =>
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    setSelected(prev =>
+      prev.length === rows.length && rows.length > 0 ? [] : rows.map(r => r.id)
+    );
+  };
+
+  const bulkDelete = async () => {
+    if (selected.length === 0) return;
+    if (!window.confirm(`Delete ${selected.length} booking(s)? This cannot be undone.`)) return;
+    try {
+      await api.delete("/admin/bookings", { data: { ids: selected } });
+      toast.success(`Deleted ${selected.length} booking(s)`);
+      setSelected([]);
+      api.get("/admin/bookings").then(r => setRows(r.data));
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -45,9 +71,16 @@ export const BookingsTable = () => {
     <div data-testid="admin-bookings-table">
       <div className="flex items-center justify-between gap-4 mb-6">
         <p className="meta text-smoke">{rows.length} booking{rows.length === 1 ? "" : "s"}</p>
-        <button onClick={exportCsv} disabled={exporting} data-testid="admin-bookings-export-button" className="btn-ghost !px-4 !py-2">
-          <Download size={13} /> {exporting ? "Preparing…" : "Export CSV"}
-        </button>
+        <div className="flex items-center gap-2">
+          {selected.length > 0 && (
+            <button onClick={bulkDelete} data-testid="admin-bookings-bulk-delete" className="btn-ghost !px-4 !py-2 text-danger">
+              <Trash2 size={13} /> Delete Selected ({selected.length})
+            </button>
+          )}
+          <button onClick={exportCsv} disabled={exporting} data-testid="admin-bookings-export-button" className="btn-ghost !px-4 !py-2">
+            <Download size={13} /> {exporting ? "Preparing…" : "Export CSV"}
+          </button>
+        </div>
       </div>
       {loading ? (
         <p className="meta text-smoke">Loading bookings…</p>
@@ -58,6 +91,11 @@ export const BookingsTable = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line text-left">
+                <th className="meta text-smoke font-normal p-4">
+                  <button onClick={toggleSelectAll} data-testid="admin-bookings-select-all">
+                    {selected.length === rows.length && rows.length > 0 ? <CheckSquare size={14} /> : <Square size={14} />}
+                  </button>
+                </th>
                 {["Event", "Name", "Phone", "People", "Amount", "Status", "Date"].map((h) => (
                   <th key={h} className="meta text-smoke font-normal p-4">{h}</th>
                 ))}
@@ -65,7 +103,12 @@ export const BookingsTable = () => {
             </thead>
             <tbody className="divide-y divide-line">
               {rows.map((b) => (
-                <tr key={b.id} data-testid={`admin-booking-row-${b.id}`}>
+                <tr key={b.id} data-testid={`admin-booking-row-${b.id}`} className={selected.includes(b.id) ? "bg-saffron/5" : ""}>
+                  <td className="p-4">
+                    <button onClick={() => toggleSelect(b.id)} data-testid={`admin-bookings-select-${b.id}`}>
+                      {selected.includes(b.id) ? <CheckSquare size={14} /> : <Square size={14} />}
+                    </button>
+                  </td>
                   <td className="p-4 text-paper">{b.event_name}</td>
                   <td className="p-4 text-paper">{b.name}</td>
                   <td className="p-4 text-smoke font-mono text-xs">{b.phone}</td>

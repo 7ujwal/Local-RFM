@@ -1,0 +1,31 @@
+http:
+  routes:
+    - type: redirect
+      source: /
+      destination: https://YOUR_GITHUB_USERNAME.github.io/Roaming-from-Rohru/
+
+services:
+  - type: web
+    name: roaming-from-rohru-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGO_URL
+        value: "YOUR_MONGODB_CONNECTION_STRING"
+      - key: DB_NAME
+        value: "roaming_from_rohru"
+      - key: CORS_ORIGINS
+        value: "https://YOUR_GITHUB_USERNAME.github.io"
+      - key: ADMIN_EMAIL
+        value: "roamingfromrohru@gmail.com"
+      - key: ADMIN_PASSKEY
+        value: ""
+      - key: RESEND_API_KEY
+        value: ""
+      - key: SENDER_EMAIL
+        value: "onboarding@resend.dev"
+      - key: RAZORPAY_KEY_ID
+        value: ""
+      - key: RAZORPAY_KEY_SECRET
+        value: ""

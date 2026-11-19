@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Pencil, Trash2, Plus } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -19,8 +19,8 @@ export const ExploreManager = () => {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
 
-  const load = () => api.get(`/explore?type=${type}`).then((r) => setItems(r.data)).catch(() => {});
-  useEffect(() => { load(); }, [type]);
+  const load = useCallback(() => api.get(`/explore?type=${type}`).then((r) => setItems(r.data)).catch(() => {}), [type]);
+  useEffect(() => { load(); }, [load]);
 
   const openNew = () => { setForm(EMPTY); setEditing({}); };
   const openEdit = (item) => {

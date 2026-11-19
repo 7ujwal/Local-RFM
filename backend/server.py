@@ -6,6 +6,7 @@ from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 from typing import Optional
+import certifi
 import os
 import uuid
 import hmac
@@ -19,17 +20,39 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+# Do not override platform env (Render). Empty local files cannot wipe MONGO_URL.
+load_dotenv(ROOT_DIR / '.env', override=False)
+load_dotenv(Path('/etc/secrets/.env'), override=False)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-mongo_url = os.environ.get('MONGO_URL')
-db_name = os.environ.get('DB_NAME')
-if not mongo_url or not db_name:
-    raise RuntimeError("MONGO_URL and DB_NAME must be set. Copy backend/.env.example to backend/.env.")
 
-client = AsyncIOMotorClient(mongo_url, serverSelectionTimeoutMS=10000)
+def _env(name, default=''):
+    value = os.environ.get(name, default)
+    return value.strip() if isinstance(value, str) else default
+
+
+mongo_url = _env('MONGO_URL') or _env('MONGODB_URI')
+db_name = _env('DB_NAME') or 'roaming_from_rohru'
+if not mongo_url:
+    present = [key for key in ('MONGO_URL', 'MONGODB_URI', 'DB_NAME') if _env(key)]
+    raise RuntimeError(
+        "MONGO_URL is not set on this process. In Render: this Web Service → Environment → "
+        "add MONGO_URL (Atlas URI) and optionally DB_NAME. Do not put the password in Git. "
+        f"Keys currently set: {present or 'none'}."
+    )
+
+# Use TLS only for Atlas (mongodb+srv://), not for local connections
+use_tls = mongo_url.startswith("mongodb+srv://")
+client_kwargs = {
+    "serverSelectionTimeoutMS": 15000,
+}
+if use_tls:
+    client_kwargs["tls"] = True
+    client_kwargs["tlsCAFile"] = certifi.where()
+
+client = AsyncIOMotorClient(mongo_url, **client_kwargs)
 db = client[db_name]
 
 
@@ -61,6 +84,15 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 
 app = FastAPI()
 app.mongodb_client = client
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=True,
+    allow_origins=cors_allow_origins(),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 api_router = APIRouter(prefix="/api")
 
 
@@ -222,6 +254,11 @@ async def send_booking_alert(booking: dict, subject_prefix: str):
 
 
 # ---------- public ----------
+
+@app.api_route("/", methods=["GET", "HEAD"])
+async def health():
+    return {"status": "ok", "api": "/api/", "ping_db": "/api/ping-db"}
+
 
 @api_router.get("/")
 async def root():
@@ -617,6 +654,24 @@ async def admin_bookings(request: Request):
     return await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 
+@api_router.delete("/admin/bookings/{booking_id}")
+async def admin_delete_booking(booking_id: str, request: Request):
+    await require_admin(request)
+    await db.bookings.delete_one({"id": booking_id})
+    return {"status": "deleted"}
+
+
+@api_router.delete("/admin/bookings")
+async def admin_bulk_delete_bookings(request: Request):
+    await require_admin(request)
+    body = await request.json()
+    ids = body.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="No booking IDs provided")
+    result = await db.bookings.delete_many({"id": {"$in": ids}})
+    return {"status": "deleted", "count": result.deleted_count}
+
+
 @api_router.get("/admin/bookings.csv")
 async def admin_bookings_csv(request: Request):
     await require_admin(request)
@@ -642,6 +697,24 @@ async def admin_bookings_csv(request: Request):
 async def admin_messages(request: Request):
     await require_admin(request)
     return await db.messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@api_router.delete("/admin/messages/{message_id}")
+async def admin_delete_message(message_id: str, request: Request):
+    await require_admin(request)
+    await db.messages.delete_one({"id": message_id})
+    return {"status": "deleted"}
+
+
+@api_router.delete("/admin/messages")
+async def admin_bulk_delete_messages(request: Request):
+    await require_admin(request)
+    body = await request.json()
+    ids = body.get("ids", [])
+    if not ids:
+        raise HTTPException(status_code=400, detail="No message IDs provided")
+    result = await db.messages.delete_many({"id": {"$in": ids}})
+    return {"status": "deleted", "count": result.deleted_count}
 
 
 @api_router.put("/admin/settings/contact")
@@ -683,6 +756,13 @@ class SiteSettingsIn(BaseModel):
 async def get_site_settings():
     doc = await db.settings.find_one({"key": "site"}, {"_id": 0})
     return doc or {"key": "site", "hero_video": "", "season": "summer"}
+
+@api_router.put("/settings/site")
+async def update_site_settings(data: SiteSettingsIn):
+    season = data.season if data.season in ("summer", "winter") else "summer"
+    doc = {"key": "site", "hero_video": data.hero_video, "season": season}
+    await db.settings.update_one({"key": "site"}, {"$set": doc}, upsert=True)
+    return doc
 
 @api_router.put("/admin/settings/site")
 async def admin_update_site(data: SiteSettingsIn, request: Request):
@@ -773,14 +853,6 @@ async def seed_data():
 
 app.include_router(api_router)
 app.mount("/api/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=cors_allow_origins(),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 
 @app.on_event("shutdown")
